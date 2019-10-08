@@ -7,8 +7,9 @@ This project is a demo, and uses boto3 to manage AWS EC2 instance snapshots.
 
 # Running
 
-"python shotty/shotty.py <command> <--project=PROJECT>"
+"python shotty/shotty.py <command> <subcommand><--project=PROJECT>"
 
-*command* is list, start or stop
+*command* is instances, volumes, or snapshoots
+*subcommand* - depends on command
 *project* is optional
 
