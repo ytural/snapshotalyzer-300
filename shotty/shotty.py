@@ -6,10 +6,13 @@ session = boto3.Session(profile_name='snapshotalyzer')
 ec2 = session.resource('ec2')
 
 
-def filter_instances(project):
+def filter_instances(project, instance):
     instances = []
     if project:
         filters = [{'Name': 'tag:Project', 'Values': [project]}]
+        instances = ec2.instances.filter(Filters=filters)
+    elif instance:
+        filters = [{'Name':'instance-id', 'Values': [instance]}]
         instances = ec2.instances.filter(Filters=filters)
     else:
         instances = ec2.instances.all()
@@ -62,9 +65,11 @@ def volumes():
 @volumes.command('list')
 @click.option('--project', default=None,
               help="Only volumes for project (tag Project:<name>)")
-def list_volumes(project):
+@click.option('--instance', default=None,
+              help="Only volumes for instance ")
+def list_volumes(project, instance):
     """List EC2 volumes"""
-    instances = filter_instances(project)
+    instances = filter_instances(project, instance)
     for i in instances:
         for v in i.volumes.all():
             print(', '.join((
@@ -87,10 +92,12 @@ def instances():
 @instances.command('list')
 @click.option('--project', default=None,
               help="Only instances for project (tag Project:<name>)")
-def list_instances(project):
+@click.option('--instance', default=None,
+              help="Only specified instance ID ")
+def list_instances(project, instance):
     """List EC2 instances"""
 
-    instances = filter_instances(project)
+    instances = filter_instances(project, instance)
 
     for i in instances:
         tags = {t['Key']: t['Value'] for t in i.tags or []}
@@ -109,9 +116,11 @@ def list_instances(project):
               help="Only instances for project (tag Project:<name>)")
 @click.option('--force', 'force_list', default=False, is_flag=True,
               help="Force to 'stop', 'start', 'snapshot', 'reboot' commands")
-def stop_instance(project, force_list):
+@click.option('--instance', default=None,
+              help="Only specified instance ID ")
+def stop_instance(project, force_list, instance):
     """Stop EC2 instances"""
-    instances = filter_instances(project)
+    instances = filter_instances(project, instance)
     if project or force_list:
         for i in instances:
             print("Stopping {0}...".format(i.id))
@@ -129,9 +138,11 @@ def stop_instance(project, force_list):
               help="Only instances for project (tag Project:<name>)")
 @click.option('--force', 'force_list', default=False, is_flag=True,
               help="Force to 'stop', 'start', 'snapshot', 'reboot' commands")
-def start_instance(project, force_list):
+@click.option('--instance', default=None,
+              help="Only specified instance ID ")
+def start_instance(project, force_list, instance):
     """Start EC2 instances"""
-    instances = filter_instances(project)
+    instances = filter_instances(project, instance)
     if project or force_list:
         for i in instances:
             print("Starting {0}...".format(i.id))
@@ -150,9 +161,11 @@ def start_instance(project, force_list):
               help="Only instances for project (tag Project:<name>)")
 @click.option('--force', 'force_list', default=False, is_flag=True,
               help="Force to 'stop', 'start', 'snapshot', 'reboot' commands")
-def reboot_instance(project, force_list):
+@click.option('--instance', default=None,
+              help="Only specified instance ID ")
+def reboot_instance(project, force_list, instance):
     """Reboot EC2 instances"""
-    instances = filter_instances(project)
+    instances = filter_instances(project, instance)
     if project or force_list:
         for i in instances:
             print("Rebooting {0}...".format(i.id))
@@ -171,9 +184,11 @@ def reboot_instance(project, force_list):
               help="Only snapshot for project (tag Project:<name>)")
 @click.option('--force', 'force_list', default=False, is_flag=True,
               help="Force to 'stop', 'start', 'snapshot', 'reboot' commands")
-def create_snapshot(project, force_list):
+@click.option('--instance', default=None,
+              help="Only specified instance ID ")
+def create_snapshot(project, force_list, instance):
     """Create EC2 snapshots"""
-    instances = filter_instances(project)
+    instances = filter_instances(project, instance)
     if project or force_list:
         for i in instances:
             try:
