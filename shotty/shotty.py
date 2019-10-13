@@ -192,6 +192,7 @@ def create_snapshot(project, force_list, instance):
     if project or force_list:
         for i in instances:
             try:
+                i_state = i.state['Name']
                 print("Stopping {0}...".format(i.id))
                 i.stop()
                 i.wait_until_stopped()
@@ -201,10 +202,10 @@ def create_snapshot(project, force_list, instance):
                         continue
                     print("Creating snapshot of {0}".format(v.id))
                     v.create_snapshot(Description='Created by SnapshotAlyzer 3000')
-
-                    print("Starting {0}...".format(i.id))
-                    i.start()
-                    i.wait_until_running()
+                if i_state == 'stopped':
+                    continue
+                print("Starting {0}...".format(i.id))
+                i.start()
                 print("Job's done!")
             except botocore.exceptions.ClientError as e:
                 print(" Could not reboot {0}. ").format(i.id)
