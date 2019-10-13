@@ -176,20 +176,24 @@ def create_snapshot(project, force_list):
     instances = filter_instances(project)
     if project or force_list:
         for i in instances:
-            print("Stopping {0}...".format(i.id))
-            i.stop()
-            i.wait_until_stopped()
-            for v in i.volumes.all():
-                if has_pending_snapshot(v):
-                    print(" Skipping {0}, snapshot already in progress".format(v.id))
-                    continue
-                print("Creating snapshot of {0}".format(v.id))
-                v.create_snapshot(Description='Created by SnapshotAlyzer 3000')
+            try:
+                print("Stopping {0}...".format(i.id))
+                i.stop()
+                i.wait_until_stopped()
+                for v in i.volumes.all():
+                    if has_pending_snapshot(v):
+                        print(" Skipping {0}, snapshot already in progress".format(v.id))
+                        continue
+                    print("Creating snapshot of {0}".format(v.id))
+                    v.create_snapshot(Description='Created by SnapshotAlyzer 3000')
 
-                print("Starting {0}...".format(i.id))
-                i.start()
-                i.wait_until_running()
-        print("Job's done!")
+                    print("Starting {0}...".format(i.id))
+                    i.start()
+                    i.wait_until_running()
+                print("Job's done!")
+            except botocore.exceptions.ClientError as e:
+                print(" Could not reboot {0}. ").format(i.id)
+                continue
     else:
         raise Exception("Please, run command either with --force or --project option")
     return
