@@ -28,8 +28,7 @@ def has_pending_snapshot(volume):
 def check_snap_age(s, age):
     time_delta = datetime.now() - timedelta(int(age))
     s_start_time = s.start_time.replace(tzinfo=None)
-    if s_start_time < time_delta:
-        return True
+    return s_start_time > time_delta
 
 
 @click.group()
@@ -205,18 +204,24 @@ def create_snapshot(project, force_list, instance, age):
         for i in instances:
             try:
                 i_state = i.state['Name']
-                print("Stopping {0}...".format(i.id))
-                i.stop()
-                i.wait_until_stopped()
+                if not i_state == 'stopped':
+                    print("Stopping {0}...".format(i.id))
+                    i.stop()
+                    i.wait_until_stopped()
+                else:
+                    print("Ignoring to stopping {0} as already stopped".format(i.id))
                 for v in i.volumes.all():
                     if has_pending_snapshot(v):
                         print(" Skipping {0}, snapshot already in progress".format(v.id))
                         continue
                     for s in v.snapshots.all():
                         if check_snap_age(s, age):
-                            print("Creating snapshot of {0}".format(v.id))
-                            v.create_snapshot(Description='Created by SnapshotAlyzer 3000')
+                            print("Skipping {0}, as last snapshot is newer than {1} days ".format(s.id, age))
+                            continue
+                    print("Creating snapshot of {0}".format(v.id))
+                    v.create_snapshot(Description='Created by SnapshotAlyzer 3000')
                 if i_state == 'stopped':
+                    print("Ignoring starting {0} as previous state is 'stopped'".format(i.id))
                     continue
                 print("Starting {0}...".format(i.id))
                 i.start()
